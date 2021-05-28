@@ -1,9 +1,9 @@
-FROM python:3.7 AS build
+FROM python:3.8 AS build
 
 COPY . /
 RUN pip3 install -r requirements.txt
 RUN pip3 install pyinstaller
-RUN pyinstaller --onefile --collect-data mthook /mthook.py 
+RUN pyinstaller --onefile /mthook.py 
 FROM debian
 COPY --from=build /dist/mthook /
 RUN /mthook version
