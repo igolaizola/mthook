@@ -48,8 +48,8 @@ async def main():
             return
 
         args = [filter['cmd']]
-        for i in range (len(match.groups())+1):
-            args.append(match.group(i))
+        for i in range (len(match.groups())):
+            args.append(match.group(i+1))
         
         print(' '.join(args))
         subprocess.run(args)
