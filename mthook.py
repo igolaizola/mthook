@@ -12,20 +12,18 @@ import sys
 
 from telethon import TelegramClient,events
 
-def run():
-    # values from my.telegram.org
-    api_id = sys.argv[1]
-    api_hash = sys.argv[2]
-    client = TelegramClient(sys.argv[3], api_id, api_hash)
-
-    client.start()
+async def main():
+    await client.start()
 
     filters = {}
 
-    for arg in sys.argv[4:]:
+    for arg in sys.argv[5:]:
         vals = arg.split(',')
         reg = re.compile(vals[2])
         filters[vals[0]] = {'cmd': vals[1], 'regex': reg}
+
+    log_id = int(sys.argv[4])
+    await client.send_message(log_id, 'mthook started')
 
     @client.on(events.NewMessage(pattern='.+'))
     async def handler(event):
@@ -53,15 +51,20 @@ def run():
         for i in range (len(match.groups())+1):
             args.append(match.group(i))
         
+        print(' '.join(args))
         subprocess.run(args)
+        await client.send_message(log_id, ' '.join(args))
 
-    client.run_until_disconnected()
-
-
-if __name__ == '__main__':
-    if len(sys.argv) == 2 and sys.argv[1] == 'version':
-        print('1.21.1')
-    elif len(sys.argv) < 5:
-        print('Usage mthook.py api_id api_hash session "chat_id,command,regex" "chat_id,command,regex" ...')
-    else:
-        run()
+if len(sys.argv) == 2 and sys.argv[1] == 'version':
+    print('1.21.1')
+elif len(sys.argv) < 5:
+    print('Usage mthook.py api_id api_hash session "chat_id,command,regex" "chat_id,command,regex" ...')
+else:
+    # values from my.telegram.org
+    api_id = sys.argv[1]
+    api_hash = sys.argv[2]
+    client = TelegramClient(sys.argv[3], api_id, api_hash)
+    with client:
+        client.loop.run_until_complete(main())
+        print('mthook started')
+        client.run_until_disconnected()
