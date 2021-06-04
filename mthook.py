@@ -5,11 +5,11 @@ Usage::
     ./mthook.py api_id api_hash session "chat_id,command,regex" "chat_id,command,regex" ...
 """
 
-import asyncio
 import re
+import requests
 import subprocess
 import sys
-
+from datetime import datetime
 from telethon import TelegramClient,events
 
 async def main():
@@ -17,13 +17,10 @@ async def main():
 
     filters = {}
 
-    for arg in sys.argv[5:]:
+    for arg in sys.argv[4:]:
         vals = arg.split(',')
         reg = re.compile(vals[2])
-        filters[vals[0]] = {'cmd': vals[1], 'regex': reg}
-
-    log_id = int(sys.argv[4])
-    await client.send_message(log_id, 'mthook started')
+        filters[vals[0]] = {'hook': vals[1], 'regex': reg}
 
     @client.on(events.NewMessage(pattern='.+'))
     async def handler(event):
@@ -47,13 +44,21 @@ async def main():
         if match is None:
             return
 
-        args = [filter['cmd']]
-        for i in range (len(match.groups())):
-            args.append(match.group(i+1))
-        
-        print(' '.join(args))
-        subprocess.run(args)
-        await client.send_message(log_id, ' '.join(args))
+        hook = filter['hook']
+        if hook.startswith('http'):
+            args = []
+            for i in range (len(match.groups())):
+                args.append(match.group(i+1))
+            url = filter['hook']+','.join(args)
+            print(datetime.now().time(), url)
+            requests.get(url)
+        else:
+            args = [filter['hook']]
+            for i in range (len(match.groups())):
+                args.append(match.group(i+1))
+            
+            print(datetime.now().time(),' '.join(args))
+            subprocess.run(args)
 
 if len(sys.argv) == 2 and sys.argv[1] == 'version':
     print('1.21.1')
@@ -66,5 +71,5 @@ else:
     client = TelegramClient(sys.argv[3], api_id, api_hash)
     with client:
         client.loop.run_until_complete(main())
-        print('mthook started')
+        print(datetime.now().time(), 'mthook started')
         client.run_until_disconnected()
